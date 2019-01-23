@@ -1,0 +1,316 @@
+---
+title: "Text and Sentiment Analysis of 4 novels from Gutenberg.com"
+author: "Pulkit Dixit"
+date: "December 18, 2018"
+output: 
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r include = FALSE, message=FALSE, warning=FALSE}
+#Importing libraries: 
+library(dplyr)
+library(stringr)
+library(gutenbergr)
+library(tidytext)
+library(ggplot2)
+library(wordcloud)
+```
+
+## Objective:  
+
+The purpose of the code below is to extract 4 novels from the Gutenberg website and analyze their content using measures like **tf**, **idf**, **tf-idf** and provide insights about the word distribution. The code will also perform sentiment analysis of the texts in order to understand the texts better and hope to connect the findings of the analysis to the basic subjective content of the novels.  
+
+I will extract the texts from the **gutenbergr** package and analyze them one-by-one and compare them together as well using **dplyr** and **ggplot2**. The data will be stored as n-grams using the **tidytext** package.
+
+## Literature Review:  
+
+All the novels being analysed are available at the [Gutenberg](https://www.gutenberg.org/wiki/Main_Page) website.
+
+The novels being used for the analysis are:  
+**The Adventures of Tom Sawyer** by Mark Twain  
+**Dracula** by Bram Stoker  
+**The War of the Worlds** by H.G. Wells  
+**Mike and Psmith** by P.G. Wodehouse
+
+The above books have been chosen due to their differences in content and hence expected difference in word frequencies and sentiments. **The Adventures of Tom Sawyer** is an adventure novel detailing the deeds (and mischiefs) of young Tom Sawyer. This book has a child as its main character and as a result, is ecpected to have content written from the point of view of a child, which is radically different from **Dracula**, which is a dark novel about a vampire. **The War of the Worlds** is a sci-fi novel written much before its time about an alien invasion on planet Earth, thus making it entirely different from the other three novels. It would be interesting to note the sentiments and word distribution of this novel and compare it to the other three novels. **Mike and Psmith** is a humorous novel written by perhaps the best comedic writer of all time - P.G. Wodehouse. This book has two adults as its central characters and their funny adventures as its content, thereby making its content and dialogue instantly different from the other books that are being analysed.  
+
+The knowledge and principles of text and sentiment analysis have been derived from the extremely concise and informative [Text Mining in R](https://www.tidytextmining.com/) written by Julia Silge and David Robinson.  
+
+## Text Analysis:  
+
+This section will focus on the word frequencies of the words in the 4 novels and observe how each novel can be differentiated from all the others by the words that occur most frequently in them.  
+
+### The Adventures of Tom Sawyer:  
+
+The most common words in the novel are:  
+
+```{r message=FALSE, echo=FALSE}
+#Downloading The Adventures of Tom Sawyer from Gutenberg.com: 
+guten_marktwain = gutenberg_download(74, meta_fields = 'author')
+
+#The most frequently occuring words in the novel are:
+guten_marktwain %>% 
+  unnest_tokens(word, text) %>% 
+  count(word, sort = TRUE)
+```
+
+Understandably, the most common words are words like 'the', 'and', 'a', etc. These words are commonly occuring throughout the English language are thus do not reveal anything about the novel. The below code removes such words and then displays the most frequently occuring words in the novel:  
+
+```{r message=FALSE, echo=FALSE}
+#The most frequently occuring words in the novel are:
+guten_marktwain %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+The above output is a better representation of the novel. Some of the most frequent terms are the names of the central characters in the novel - Tom, Huck, Joe, Becky. The bar chart below shows the 20 most commonly occuring words in the text:
+
+```{r message=FALSE, echo=FALSE, fig.width=8, fig.height=6, fig.align='center'}
+#Plotting the 20 most frequently occuring words in the novel are:
+guten_marktwain %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(20, n) %>% 
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+    geom_col(show.legend = FALSE, fill = 'lightblue') +
+    xlab(NULL) +
+    ylab('Frequency') +
+    ggtitle('20 most frequent words in The Adventures of Tom Sawyer') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    coord_flip()
+```
+
+Words in the text can also be visualized as a wordcloud as shown below:  
+
+```{r message=FALSE, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+#Creating wordcloud:
+guten_marktwain %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, max.words = 200))
+```
+
+### Dracula:  
+
+The most common words in **Dracula** are:  
+
+```{r message=FALSE, echo=FALSE}
+#Downloading Dracula from Gutenberg.com: 
+guten_bramstoker = gutenberg_download(345, meta_fields = 'author')
+
+#The most frequently occuring words in the novel are:
+guten_bramstoker %>% 
+  unnest_tokens(word, text) %>% 
+  count(word, sort = TRUE)
+```
+
+As was the case with **The Adventures of Tom Sawyer**, the most common words in **Dracula** are also words like 'the', 'and', 'of', etc. After removing such words, the most common words are:  
+
+```{r message=FALSE, echo=FALSE}
+#The most frequently occuring words in the novel are:
+guten_bramstoker %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+The below visual displays the 20 most frequent words in the text:  
+
+```{r message=FALSE, echo=FALSE, fig.width=8, fig.height=6, fig.align='center'}
+#Plotting the 20 most frequently occuring words in the novel are:
+guten_bramstoker %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(20, n) %>% 
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+    geom_col(show.legend = FALSE, fill = 'darkorange') +
+    xlab(NULL) +
+    ylab('Frequency') +
+    ggtitle('20 most frequent words in Dracula') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    coord_flip()
+```
+
+Unlike how proper nouns dominated the bulk of the frequent words in **The Adventures of Tom Sawyer**, **Dracula** has many more common nouns like 'time', 'night', 'day', etc. indicating that **Dracula** is a bit more plot-centric and **The Adventures of Tom Sawyer** is a bit more centered around its main characters.  
+
+The wordcloud for **Dracula** can be seen below:  
+
+```{r message=FALSE, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+#Creating wordcloud:
+guten_bramstoker %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, max.words = 75))
+```
+
+### The War of the Worlds:  
+
+The most frequent words in **The War of the Worlds** along with their frequencies are:  
+
+```{r message=FALSE, echo=FALSE}
+#Downloading The War of the Worlds from Gutenberg.com: 
+guten_hgwells = gutenberg_download(36, meta_fields = 'author')
+
+#The most frequently occuring words in the novel are:
+guten_hgwells %>% 
+  unnest_tokens(word, text) %>% 
+  count(word, sort = TRUE)
+```
+
+Similar to the above 2 novels, this novel too has unimportant words like 'the', 'and', 'of', etc. as its most common words. Upon removing such words, the results are:  
+
+```{r message=FALSE, echo=FALSE}
+#The most frequently occuring words in the novel are:
+guten_hgwells %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+**The War of the Worlds** is much more plot-centric than either of the two novels analyzed before. The can be seen from the above output, in which there are no proper nouns in the top ten most frequent words. The top 20 most frequent words in the text are:  
+
+```{r message=FALSE, echo=FALSE, fig.width=8, fig.height=6, fig.align='center'}
+#Plotting the 20 most frequently occuring words in the novel are:
+guten_hgwells %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(20, n) %>% 
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+    geom_col(show.legend = FALSE, fill = 'lightgreen') +
+    xlab(NULL) +
+    ylab('Frequency') +
+    ggtitle('20 most frequent words in Dracula') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    coord_flip()
+```
+
+The wordcloud for the text is displayed below:  
+
+```{r message=FALSE, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+#Creating wordcloud:
+guten_hgwells %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, max.words = 65))
+```
+
+### Mike and Psmith:  
+
+The most frequent words in **Mike and Psmith** are:
+
+```{r message=FALSE, echo=FALSE}
+#Downloading Mike and Psmith from Gutenberg.com: 
+guten_pgwodehouse = gutenberg_download(10586, meta_fields = 'author')
+
+#The most frequently occuring words in the novel are:
+guten_pgwodehouse %>% 
+  unnest_tokens(word, text) %>% 
+  count(word, sort = TRUE)
+```
+
+The most frequent words after removing stop words are:  
+
+```{r message=FALSE, echo=FALSE}
+#The most frequently occuring words in the novel are:
+guten_pgwodehouse %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE)
+```
+
+**Mike and Psmith** is visibly more character centric than **The War of the Worlds**, with 'Mike' and 'Psmith' - its central characters - being the two most common words. The 20 most common words in the novel are:  
+
+```{r message=FALSE, echo=FALSE, fig.width=8, fig.height=6, fig.align='center'}
+#Plotting the 20 most frequently occuring words in the novel are:
+guten_pgwodehouse %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(20, n) %>% 
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+    geom_col(show.legend = FALSE, fill = 'purple') +
+    xlab(NULL) +
+    ylab('Frequency') +
+    ggtitle('20 most frequent words in Dracula') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    coord_flip()
+```
+
+The wordcloud for the text is displayed below:  
+
+```{r message=FALSE, echo=FALSE, fig.width=5, fig.height=5, fig.align='center'}
+#Creating wordcloud:
+guten_pgwodehouse %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  count(word) %>% 
+  with(wordcloud(word, n, max.words = 150))
+```
+
+### Comparison using tf, ldf and tf-ldf:  
+
+Word frequency for multiple documents can also be compared by calculating how important a word is to a document in a set of documents. **Term Frequency (tf)** is a measure that calculates the frequency of words in a document. However, more often than not, these are words like 'a', 'the', 'of', etc. which are not actually important in the text. **Inverse Document Frequency (idf)** is a term that decreases the weights on frequently occuring terms and assigns more weights to less frequently occuring words. **tf-idf** is the product of **tf** and **idf** and measures the importance of a word to a document in a set of documents. THe below graph shows the 20 most important words in each novel based on their **tf-idf** values:  
+
+```{r message=FALSE, warning=FALSE, fig.width=8, fig.height=10, fig.align='center'}
+# Downloading the books from Gutenberg.com:
+books = gutenberg_download(c(74, 345, 36, 10586), meta_fields = 'author')
+
+#Grouping the books by author:
+books = books %>% 
+  unnest_tokens(word, text) %>% 
+  count(author, word, sort = TRUE) %>% 
+  ungroup()
+
+#Preparing to plot the data by coverting words and authors to factors, 
+#and by adding tf, idf and tf-idf values to the data:
+plotbooks = books %>% 
+  bind_tf_idf(word, author, n) %>% 
+  arrange(desc(tf_idf)) %>% 
+  mutate(word = factor(word, levels = rev(unique(word)))) %>% 
+  mutate(author = factor(author, levels = c('Twain, Mark', 
+                                            'Stoker, Bram', 
+                                            'Wells, H. G. (Herbert George)', 
+                                            'Wodehouse, P. G. (Pelham Grenville)')))
+
+#Plotting the graph for the 20 most important words for each novel:
+plotbooks %>% 
+  group_by(author) %>% 
+  top_n(20, tf_idf) %>% 
+  ungroup() %>% 
+  mutate(word = reorder(word, tf_idf)) %>% 
+  ggplot(aes(word, tf_idf, fill = author)) + 
+    geom_col(show.legend = FALSE) +
+    xlab(NULL) +
+    ylab('TF-IDF') +
+    ggtitle('20 most important words in based on TF-IDF values') +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    coord_flip() + 
+    facet_wrap(~author, ncol = 2, scales = "free")
+
+```
+
+The graph shows that the proper nouns for the characters in each novel have been considered the most important words in the novels, which is understandable since they distinguish each novel from the other. Another observation that can be made is that which **The Adventures of Tom Sawyer**, **Dracula** and **Mike and Psmith** are character centric novels (as indicated by their titles), they have a lot more proper nouns as their important words while **The War of the Worlds** is more plot centric and thus has words like 'martian', 'mars' and 'planet' as some of its more important words.  
+
+It is worth noticing that the 'important words' calculated by the tf-idf measure are different from the 20 most frequent words in each novel as visualized before.  
